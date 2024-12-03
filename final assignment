@@ -19,7 +19,44 @@ def load_data(file_path, default_value):
 def save_data(file_path, data):
     with open(file_path, "wb") as file:# Open the file in binary write mode
         pickle.dump(data, file)# Write the data to the file
+# Admin Class for managing admin details
+class Admin:
+    def __init__(self, admin_id, name, email, access_level, password):
+        self.admin_id = admin_id
+        self.name = name
+        self.email = email
+        self.access_level = access_level
+        self.password = password
 
+    def set_admin_id(self, admin_id):
+        self.admin_id = admin_id
+
+    def get_admin_id(self):
+        return self.admin_id
+
+    def set_name(self, name):
+        self.name = name
+
+    def get_name(self):
+        return self.name
+
+    def set_email(self, email):
+        self.email = email
+
+    def get_email(self):
+        return self.email
+
+    def set_access_level(self, access_level):
+        self.access_level = access_level
+
+    def get_access_level(self):
+        return self.access_level
+
+    def set_password(self, password):
+        self.password = password
+
+    def get_password(self):
+        return self.password
 # Main Application Class
 class TicketSystemApp:
     def __init__(self, root):
@@ -46,7 +83,10 @@ class TicketSystemApp:
             "Annual Membership": {"price": 1000, "validity": "1 year", "features": "Unlimited access for 1 year"}
         }        # Define available discounts
 
-        self.discounts = {"Group Ticket": 15}  # Discount specific to Group Ticket
+        self.discounts = {
+            "Group Ticket": {"percentage": 15, "expiry": "2024-12-31"},
+            "Annual Membership": {"percentage": 10, "expiry": "2025-01-15"}
+        }# Discount specific to Group Ticket
         self.cart = [] # Initialize an empty cart for ticket purchases
         self.logged_in_user = None # No user is logged in initially
         self.create_main_menu() # Display the main menu
@@ -60,6 +100,7 @@ class TicketSystemApp:
     def create_main_menu(self):
         self.clear_window() # Clear the current window
         tk.Label(self.root, text="Welcome to the Ticket System", font=("Arial", 16)).pack(pady=20) # Display a welcome message
+        tk.Button(self.root, text="Admin Login", font=("Arial", 12), command=self.admin_login).pack(pady=10)
 
         if self.logged_in_user: # If a user is logged in, show their name and a logout button
             tk.Label(self.root, text=f"Logged in as: {self.logged_in_user}", font=("Arial", 12), fg="blue").pack(pady=5)
@@ -69,6 +110,31 @@ class TicketSystemApp:
         tk.Button(self.root, text="Ticket Purchasing", font=("Arial", 12), command=self.ticket_purchasing).pack(pady=10)
         tk.Button(self.root, text="Admin Dashboard", font=("Arial", 12), command=self.admin_dashboard).pack(pady=10)
 
+    def admin_login(self):
+        self.clear_window()
+        tk.Label(self.root, text="Admin Login", font=("Arial", 16)).pack(pady=10)
+
+        tk.Label(self.root, text="Admin ID:").pack()
+        admin_id_entry = tk.Entry(self.root)
+        admin_id_entry.pack()
+
+        tk.Label(self.root, text="Password:").pack()
+        password_entry = tk.Entry(self.root, show="*")
+        password_entry.pack()
+
+        def authenticate_admin():
+            admin_id = admin_id_entry.get()
+            password = password_entry.get()
+
+            # Example hardcoded admin credentials (replace with a dynamic solution later)
+            if admin_id == "admin001" and password == "password123":
+                tk.Label(self.root, text="Login successful!", font=("Arial", 12), fg="green").pack()
+                self.root.after(1000, self.admin_dashboard)  # Redirect to Admin Dashboard
+            else:
+                tk.Label(self.root, text="Invalid Admin ID or Password.", font=("Arial", 12), fg="red").pack()
+
+        tk.Button(self.root, text="Login", command=authenticate_admin).pack(pady=10)
+        tk.Button(self.root, text="Back to Main Menu", command=self.create_main_menu).pack(pady=10)
     # Customer Management
     def customer_management(self):
         self.clear_window() # Clear the current window
@@ -82,52 +148,116 @@ class TicketSystemApp:
         # Button to return to the main menu
         tk.Button(self.root, text="Back to Main Menu", font=("Arial", 12), command=self.create_main_menu).pack(pady=10)
 
-    # Function to handle account creation
     def create_account(self):
-        self.clear_window() # Clear the current window
-        tk.Label(self.root, text="Create Account", font=("Arial", 16)).pack(pady=10) # Display the section title
-        tk.Label(self.root, text="Name:").pack() # Prompt the user to enter their name
-        name_entry = tk.Entry(self.root) # Create an entry widget for the name
+        """Create a new customer account."""
+        self.clear_window()
+        tk.Label(self.root, text="Create Account", font=("Arial", 16)).pack(pady=10)
+
+        # Input fields for account details
+        tk.Label(self.root, text="Name:").pack()
+        name_entry = tk.Entry(self.root)
         name_entry.pack()
+
+        tk.Label(self.root, text="Email:").pack()
+        email_entry = tk.Entry(self.root)
+        email_entry.pack()
+
+        tk.Label(self.root, text="Phone Number (+971):").pack()
+        phone_entry = tk.Entry(self.root)
+        phone_entry.pack()
+
+        tk.Label(self.root, text="Age:").pack()
+        age_entry = tk.Entry(self.root)
+        age_entry.pack()
 
         def save_account():
-            name = name_entry.get() # Get the name entered by the user
-            if name:
-                if name in self.customers: # Check if the account already exists
-                    tk.Label(self.root, text="Account already exists!", font=("Arial", 12), fg="red").pack()
-                else: # Create a new account and save it
-                    self.customers[name] = {"name": name, "purchases": []}
-                    save_data(CUSTOMER_FILE, self.customers) # Save customer data
-                    tk.Label(self.root, text="Account created successfully!", font=("Arial", 12), fg="green").pack()
-            else:
-                tk.Label(self.root, text="Please enter a name.", font=("Arial", 12), fg="red").pack()
-        # Button to create the account and return to customer management
-        tk.Button(self.root, text="Create", command=save_account).pack(pady=5)
-        tk.Button(self.root, text="Back to Customer Management", command=self.customer_management).pack(pady=10)
+            name = name_entry.get().strip()
+            email = email_entry.get().strip()
+            phone = phone_entry.get().strip()
+            age = age_entry.get().strip()
 
-    # Additional methods for ticket purchasing, viewing cart, checkout, admin dashboard, etc.
-    # These methods handle specific functionalities and are structured similarly with appropriate
-    # comments and clear widget arrangements.
-    # Example: Function to display sales data
+            # Validate input
+            if not name or not email or not phone or not age:
+                tk.Label(self.root, text="All fields are required.", font=("Arial", 12), fg="red").pack()
+                return
+
+            # Validate email format
+            if "@" not in email or "." not in email:
+                tk.Label(self.root, text="Invalid email format.", font=("Arial", 12), fg="red").pack()
+                return
+
+            # Validate phone format
+            if not phone.startswith("971") or len(phone) != 12 or not phone.isdigit():
+                tk.Label(self.root, text="Invalid phone number. Enter in the format 971XXXXXXXXX.",
+                         font=("Arial", 12), fg="red").pack()
+                return
+
+            # Validate age
+            if not age.isdigit() or int(age) <= 0:
+                tk.Label(self.root, text="Invalid age. Please enter a positive number.", font=("Arial", 12),
+                         fg="red").pack()
+                return
+
+            age = int(age)
+
+            # Format phone number
+            phone = f"+{phone}"
+
+            # Generate a unique Customer ID
+            customer_id = f"CUST{len(self.customers) + 1:05d}"
+
+            # Check for existing email
+            if any("email" in cust and cust["email"] == email for cust in self.customers.values()):
+                tk.Label(self.root, text="Account with this email already exists!", font=("Arial", 12), fg="red").pack()
+                return
+
+            # Save customer details
+            self.customers[name] = {
+                "customer_id": customer_id,
+                "name": name,
+                "email": email,
+                "phone": phone,
+                "age": age,
+                "purchases": []
+            }
+            save_data(CUSTOMER_FILE, self.customers)  # Save to file
+            tk.Label(self.root, text=f"Account created successfully!\nCustomer ID: {customer_id}",
+                     font=("Arial", 12), fg="green").pack()
+
+        tk.Button(self.root, text="Create", command=save_account).pack(pady=5)
+        tk.Button(self.root, text="Back to Main Menu", command=self.create_main_menu).pack(pady=10)
 
     def login(self):
-        self.clear_window() # Clear the current window
-        tk.Label(self.root, text="Login", font=("Arial", 16)).pack(pady=10) # Display the section title
-        tk.Label(self.root, text="Name:").pack() # Prompt the user to enter their name
-        name_entry = tk.Entry(self.root) # Create an entry widget for the user to input their name
+        """Login a customer."""
+        self.clear_window()
+        tk.Label(self.root, text="Login", font=("Arial", 16)).pack(pady=10)
+
+        # Labels and entry fields for login
+        tk.Label(self.root, text="Name:").pack()
+        name_entry = tk.Entry(self.root)
         name_entry.pack()
 
-        # Function to authenticate the user
-        def authenticate(): # Get the name entered by the user
-            name = name_entry.get()  # Check if the name exists in the customer data
-            if name in self.customers: # Log in the user
-                self.logged_in_user = name
-                tk.Label(self.root, text="Login successful!", font=("Arial", 12), fg="green").pack() # Display success message
-                tk.Button(self.root, text="Go to Main Menu", command=self.create_main_menu).pack(pady=10)# Provide a button to navigate to the main menu
-            else:# If the name doesn't exist
-                tk.Label(self.root, text="Account not found!", font=("Arial", 12), fg="red").pack()# Display error message
+        tk.Label(self.root, text="Phone or Email:").pack()
+        contact_entry = tk.Entry(self.root)
+        contact_entry.pack()
 
-        # Button to trigger the login process
+        # Authenticate the user
+        def authenticate():
+            name = name_entry.get().strip()
+            contact = contact_entry.get().strip()
+
+            # Check credentials
+            if name in self.customers:
+                customer = self.customers[name]
+                if contact == customer["phone"] or contact == customer["email"]:
+                    self.logged_in_user = name
+                    tk.Label(self.root, text="Login successful!", font=("Arial", 12), fg="green").pack()
+                    self.root.after(1000, self.create_main_menu)
+                else:
+                    tk.Label(self.root, text="Invalid phone or email.", font=("Arial", 12), fg="red").pack()
+            else:
+                tk.Label(self.root, text="Account not found.", font=("Arial", 12), fg="red").pack()
+
         tk.Button(self.root, text="Login", command=authenticate).pack(pady=5)
         tk.Button(self.root, text="Back to Customer Management", command=self.customer_management).pack(pady=10)
 
@@ -138,16 +268,25 @@ class TicketSystemApp:
 
     # Function to display the user's purchase orders
     def view_purchase_orders(self):
-        self.clear_window()# Clear the current window
-        if self.logged_in_user:# Check if a user is logged in
-            tk.Label(self.root, text="Your Purchase Orders", font=("Arial", 16)).pack(pady=10)# Display the section title
-            orders = self.customers[self.logged_in_user].get("purchases", [])# Get the user's purchases
-            if not orders: # If no purchases are found
+        """Display the logged-in customer's purchase orders."""
+        self.clear_window()
+        if self.logged_in_user:
+            customer = self.customers[self.logged_in_user]
+            tk.Label(self.root, text="Your Purchase Orders", font=("Arial", 16)).pack(pady=10)
+            tk.Label(self.root, text=f"Customer ID: {customer['customer_id']}", font=("Arial", 12)).pack()
+            tk.Label(self.root, text=f"Name: {customer['name']}", font=("Arial", 12)).pack()
+            tk.Label(self.root, text=f"Email: {customer['email']}", font=("Arial", 12)).pack()
+            tk.Label(self.root, text=f"Phone: {customer['phone']}", font=("Arial", 12)).pack()
+
+            # Display orders
+            orders = customer.get("purchases", [])
+            if not orders:
                 tk.Label(self.root, text="No purchases found.", font=("Arial", 12)).pack()
-            else:# If purchases are found
-                for order in orders:# Display each purchase
+            else:
+                for order in orders:
                     tk.Label(self.root, text=f"- {order}", font=("Arial", 12)).pack()
-        tk.Button(self.root, text="Back to Customer Management", command=self.customer_management).pack(pady=10)# Button to return to Customer Management
+
+        tk.Button(self.root, text="Back to Customer Management", command=self.customer_management).pack(pady=10)
 
     # Ticket Purchasing
     def ticket_purchasing(self):
@@ -169,110 +308,288 @@ class TicketSystemApp:
 
     # Function to add a ticket to the cart
     def add_to_cart(self, ticket_type):
-        self.cart.append(ticket_type)# Add the selected ticket type to the cart
-        tk.Label(self.root, text=f"Added {ticket_type} to cart!", font=("Arial", 12)).pack()# Display a success message
+        """
+        Add a ticket to the shopping cart. Includes:
+        - Age verification for Child Tickets.
+        - Seat reservation and services for VIP Tickets.
+        """
+        # Get the currently logged-in customer's details
+        customer = self.customers[self.logged_in_user]
+
+        if ticket_type == "Child Ticket":
+            # Verify if the customer is eligible for a Child Ticket based on age
+            self.clear_window()
+            tk.Label(self.root, text="Enter Date of Birth (YYYY-MM-DD):", font=("Arial", 12)).pack()
+            dob_entry = tk.Entry(self.root)
+            dob_entry.pack()
+
+            def verify_age():
+                dob = dob_entry.get().strip()
+                try:
+                    birth_year = int(dob.split("-")[0])  # Extract the birth year
+                    today_year = 2024  # Current year (December 4, 2024)
+                    age = today_year - birth_year  # Calculate age
+
+                    if age > 12:  # If age is greater than 12, deny ticket purchase
+                        tk.Label(self.root, text="Child Ticket is only for kids 12 and under.",
+                                 font=("Arial", 12), fg="red").pack()
+                        self.root.after(3000, self.ticket_purchasing)
+                    else:
+                        self.cart.append(ticket_type)  # Add ticket to the cart if eligible
+                        tk.Label(self.root, text="Child Ticket added to cart!", font=("Arial", 12), fg="green").pack()
+                        self.root.after(3000, self.ticket_purchasing)
+                except ValueError:
+                    tk.Label(self.root, text="Invalid DOB format. Use YYYY-MM-DD.", font=("Arial", 12), fg="red").pack()
+
+            tk.Button(self.root, text="Verify Age", font=("Arial", 12), command=verify_age).pack(pady=10)
+            tk.Button(self.root, text="Back to Ticket Purchasing", font=("Arial", 12),
+                      command=self.ticket_purchasing).pack(pady=10)
+
+        elif ticket_type == "VIP Ticket":
+            # Handle seat reservation and services for VIP Tickets
+            self.clear_window()
+            tk.Label(self.root, text="Reserve Your VIP Ticket", font=("Arial", 16)).pack(pady=10)
+
+            # Input field for seat reservation
+            tk.Label(self.root, text="Select Seat Number (1-100):", font=("Arial", 12)).pack()
+            seat_entry = tk.Entry(self.root)
+            seat_entry.pack()
+
+            # Dropdown menu for VIP services
+            tk.Label(self.root, text="Choose Additional Services:", font=("Arial", 12)).pack(pady=5)
+            service_var = tk.StringVar(self.root)
+            service_var.set("Priority Access to Rides")  # Default value
+            services = ["Priority Access to Rides", "Exclusive VIP Lounge Access"]
+            tk.OptionMenu(self.root, service_var, *services).pack()
+
+            def reserve_vip():
+                seat_number = seat_entry.get().strip()
+                service = service_var.get()
+
+                # Validate seat number
+                if not seat_number.isdigit() or not (1 <= int(seat_number) <= 100):
+                    tk.Label(self.root, text="Invalid seat number. Enter a number between 1 and 100.", fg="red").pack()
+                    return
+
+                # Check if reserved_seats attribute exists; initialize if not
+                if "reserved_seats" not in self.__dict__:
+                    self.reserved_seats = set()  # Use a set to store reserved seats for fast lookup
+
+                if int(seat_number) in self.reserved_seats:  # Check if the seat is already reserved
+                    tk.Label(self.root, text="Seat already reserved. Please choose another.", fg="red").pack()
+                else:
+                    # Reserve the seat and add the VIP Ticket with seat number and service to the cart
+                    self.reserved_seats.add(int(seat_number))  # Mark the seat as reserved
+                    self.cart.append({"ticket_type": ticket_type, "seat_number": int(seat_number), "service": service})
+                    tk.Label(self.root,
+                             text=f"{ticket_type} added to cart with Seat {seat_number} and Service: {service}!",
+                             font=("Arial", 12), fg="green").pack()
+                    self.root.after(3000, self.ticket_purchasing)
+
+            # Button to reserve seat and service
+            tk.Button(self.root, text="Reserve", font=("Arial", 12), command=reserve_vip).pack(pady=10)
+            tk.Button(self.root, text="Back to Ticket Purchasing", font=("Arial", 12),
+                      command=self.ticket_purchasing).pack(pady=10)
+
+        else:
+            # Add tickets without any special condition directly to the cart
+            self.cart.append(ticket_type)
+            tk.Label(self.root, text=f"Added {ticket_type} to cart!", font=("Arial", 12)).pack()
 
     # Function to view the items in the cart
     def view_cart(self):
         self.clear_window()  # Clear the current window
-        tk.Label(self.root, text="Your Shopping Cart", font=("Arial", 16)).pack(pady=10) # Display the section title
+        tk.Label(self.root, text="Your Shopping Cart", font=("Arial", 16)).pack(pady=10)  # Display the section title
 
-        if not self.cart:# If the cart is empty
-            tk.Label(self.root, text="Your cart is empty.", font=("Arial", 12), fg="red").pack()# Display an empty cart message
-        else:# If the cart has items
-            for i, ticket in enumerate(self.cart):# Display each item in the cart
-                tk.Label(self.root, text=f"{i+1}. {ticket}", font=("Arial", 12)).pack()
+        if not self.cart:  # If the cart is empty
+            tk.Label(self.root, text="Your cart is empty.", font=("Arial", 12),
+                     fg="red").pack()  # Display an empty cart message
+        else:  # If the cart has items
+            for i, ticket in enumerate(self.cart):  # Display each item in the cart
+                tk.Label(self.root, text=f"{i + 1}. {ticket}", font=("Arial", 12)).pack()
 
-            tk.Label(self.root, text="Enter item number to remove:", font=("Arial", 12)).pack()# Prompt to remove an item
-            item_entry = tk.Entry(self.root)# Create an entry widget for the item number
+            tk.Label(self.root, text="Enter item number to remove:",
+                     font=("Arial", 12)).pack()  # Prompt to remove an item
+            item_entry = tk.Entry(self.root)  # Create an entry widget for the item number
             item_entry.pack()
+
+            # Label for feedback messages
+            message_label = tk.Label(self.root, text="", font=("Arial", 12))
+            message_label.pack(pady=5)
 
             # Function to remove an item from the cart
             def remove_item():
                 try:
-                    index = int(item_entry.get()) - 1# Get the index of the item to remove
-                    if 0 <= index < len(self.cart): # Check if the index is valid
-                        removed_item = self.cart.pop(index)# Remove the item from the cart
-                        tk.Label(self.root, text=f"Removed {removed_item} from cart.", font=("Arial", 12), fg="green").pack()# Display a success message
-                        self.view_cart()# Refresh the cart view
+                    index = int(item_entry.get()) - 1  # Get the index of the item to remove
+                    if 0 <= index < len(self.cart):  # Check if the index is valid
+                        removed_item = self.cart.pop(index)  # Remove the item from the cart
+                        message_label.config(text=f"The {removed_item} is removed from the cart.",
+                                             fg="green")  # Success message
+                        # Refresh the updated cart without removing the feedback message
+                        self.clear_window()
+                        tk.Label(self.root, text="Your Shopping Cart", font=("Arial", 16)).pack(pady=10)
+                        for i, ticket in enumerate(self.cart):  # Display updated cart items
+                            tk.Label(self.root, text=f"{i + 1}. {ticket}", font=("Arial", 12)).pack()
+                        tk.Label(self.root, text="Enter item number to remove:", font=("Arial", 12)).pack()
+                        item_entry = tk.Entry(self.root)  # Add the input entry again
+                        item_entry.pack()
+                        tk.Button(self.root, text="Remove Item", command=remove_item).pack(pady=5)
+                        message_label.pack(pady=5)
                     else:
-                        tk.Label(self.root, text="Invalid item number.", font=("Arial", 12), fg="red").pack()# Display an error message
-                except ValueError:# Handle invalid input
-                    tk.Label(self.root, text="Please enter a valid number.", font=("Arial", 12), fg="red").pack()
+                        message_label.config(text="Invalid item number. Please try again.", fg="red")  # Error message
+                except ValueError:  # Handle invalid input
+                    message_label.config(text="Please enter a valid number.", fg="red")  # Error message
 
-            tk.Button(self.root, text="Remove Item", command=remove_item).pack(pady=5)# Button to trigger the remove action
+            tk.Button(self.root, text="Remove Item", command=remove_item).pack(
+                pady=5)  # Button to trigger the remove action
 
-        tk.Button(self.root, text="Back to Ticket Purchasing", command=self.ticket_purchasing).pack(pady=10)# Button to return to Ticket Purchasing
-
+        tk.Button(self.root, text="Back to Ticket Purchasing", command=self.ticket_purchasing).pack(
+            pady=10)  # Button to return to Ticket Purchasing
     # Function to handle the checkout process
+    from datetime import datetime  # Ensure this is imported at the top of the file
+
     def checkout(self):
-        self.clear_window()# Clear the current window
-        if not self.cart:# If the cart is empty
-            tk.Label(self.root, text="No tickets in the cart.", font=("Arial", 12), fg="red").pack()# Display an error message
-        else: # If there are items in the cart
-            tk.Label(self.root, text="Checkout", font=("Arial", 16)).pack(pady=10)# Display the section title
-            tk.Label(self.root, text=f"Tickets Purchased: {', '.join(self.cart)}", font=("Arial", 12)).pack()# List purchased tickets
+        """
+        Handle the checkout process for ticket purchases.
+        """
+        self.clear_window()  # Clear the current window
 
-            # Calculate total
-            total_cost = 0
-            discount_applied = 0
+        # Check if the cart is empty
+        if not self.cart:
+            tk.Label(self.root, text="No tickets in the cart.", font=("Arial", 12), fg="red").pack()
+            tk.Button(self.root, text="Back to Ticket Purchasing", font=("Arial", 12),
+                      command=self.ticket_purchasing).pack(pady=10)
+            return
 
-            for ticket in self.cart: # Iterate through the cart
-                if ticket == "Group Ticket": # Apply discount for group tickets
-                    discount = self.tickets[ticket]["price"] * self.discounts["Group Ticket"] / 100
-                    discount_applied += discount# Accumulate discounts
-                    total_cost += self.tickets[ticket]["price"] - discount# Add the discounted price
+        # Display the checkout section
+        tk.Label(self.root, text="Checkout", font=("Arial", 16)).pack(pady=10)
+
+        total_cost = 0
+        discount_applied = 0
+        tickets_with_ids = []  # List to store tickets with their unique IDs
+        fixed_date = "2024-12-04"  # Fixed payment date
+
+        # Calculate total cost, apply discounts, and generate ticket IDs
+        for index, ticket in enumerate(self.cart):
+            ticket_type = ticket["ticket_type"] if isinstance(ticket, dict) else ticket
+            ticket_price = self.tickets[ticket_type]["price"]
+            ticket_id = f"TID{len(self.sales) + index + 1:06d}"  # Generate unique Ticket ID
+            tickets_with_ids.append({"ticket": ticket, "ticket_id": ticket_id})
+
+            if ticket_type in self.discounts:
+                discount_details = self.discounts[ticket_type]
+                expiry_date = discount_details["expiry"]
+                if expiry_date >= fixed_date:
+                    discount = ticket_price * discount_details["percentage"] / 100
+                    discount_applied += discount
+                    total_cost += ticket_price - discount
+                    tk.Label(self.root,
+                             text=f"{ticket_type} (ID: {ticket_id}): Discount applied (valid until {expiry_date})",
+                             font=("Arial", 12), fg="green").pack()
                 else:
-                    total_cost += self.tickets[ticket]["price"]# Add the regular price
-            # Display discounts and total cost
-            tk.Label(self.root, text=f"Discount Applied: AED {discount_applied:.2f}", font=("Arial", 12), fg="green").pack()
-            tk.Label(self.root, text=f"Total Cost: AED {total_cost:.2f}", font=("Arial", 12)).pack()
+                    total_cost += ticket_price
+                    tk.Label(self.root, text=f"{ticket_type} (ID: {ticket_id}): Discount expired on {expiry_date}",
+                             font=("Arial", 12), fg="red").pack()
+            else:
+                total_cost += ticket_price
+                tk.Label(self.root, text=f"{ticket_type} (ID: {ticket_id})", font=("Arial", 12)).pack()
 
-            # Payment method selection
-            tk.Label(self.root, text="Choose Payment Method", font=("Arial", 12)).pack(pady=5)
-            payment_var = tk.StringVar()# Variable to store the selected payment method
-            tk.Radiobutton(self.root, text="Credit Card", variable=payment_var, value="Credit Card").pack(pady=5)
-            tk.Radiobutton(self.root, text="Debit Card", variable=payment_var, value="Debit Card").pack(pady=5)
-            # Entry for card number
-            tk.Label(self.root, text="Enter Card Number (5 digits):", font=("Arial", 12)).pack(pady=5)
-            card_entry = tk.Entry(self.root) # Create an entry widget for card number
-            card_entry.pack()
+        # Display total cost and discount
+        tk.Label(self.root, text=f"Total Discount Applied: AED {discount_applied:.2f}", font=("Arial", 12),
+                 fg="green").pack()
+        tk.Label(self.root, text=f"Total Cost: AED {total_cost:.2f}", font=("Arial", 12)).pack()
 
-            # Function to complete the payment
-            def complete_payment():
-                card_number = card_entry.get()# Get the entered card number
-                if len(card_number) != 5 or not card_number.isdigit():# Validate the card number
-                    tk.Label(self.root, text="Invalid Card Number!", font=("Arial", 12), fg="red").pack()# Display an error message
-                    return
+        # Payment method selection
+        tk.Label(self.root, text="Choose Payment Method", font=("Arial", 12)).pack(pady=5)
+        payment_var = tk.StringVar()
+        tk.Radiobutton(self.root, text="Credit Card", variable=payment_var, value="Credit Card").pack()
+        tk.Radiobutton(self.root, text="Debit Card", variable=payment_var, value="Debit Card").pack()
 
-                # Save purchases
-                if self.logged_in_user:
-                    self.customers[self.logged_in_user]["purchases"].extend(self.cart)
-                    save_data(CUSTOMER_FILE, self.customers)
-                # Update sales data
-                for ticket in self.cart:
-                    if ticket in self.sales:
-                        self.sales[ticket] += 1
-                save_data(SALES_FILE, self.sales) # Save sales data
+        # Card number entry
+        tk.Label(self.root, text="Enter Card Number (5 digits):", font=("Arial", 12)).pack(pady=5)
+        card_entry = tk.Entry(self.root)
+        card_entry.pack()
 
-                self.cart.clear() # Clear the cart after checkout
-                tk.Label(self.root, text=f"Payment Completed Successfully!", font=("Arial", 12), fg="green").pack()# Display payment confirmation
-                tk.Label(self.root, text=f"Card Number: {card_number}", font=("Arial", 12)).pack()
-                tk.Label(self.root, text=f"Amount Paid: AED {total_cost:.2f}", font=("Arial", 12)).pack()
+        def complete_payment():
+            """
+            Complete the payment process, generate a booking ID, and assign ticket IDs.
+            """
+            card_number = card_entry.get()
 
-            # Button to confirm the payment
-            tk.Button(self.root, text="Confirm Payment", command=complete_payment).pack(pady=10)
+            # Validate card number
+            if len(card_number) != 5 or not card_number.isdigit():
+                tk.Label(self.root, text="Invalid Card Number!", font=("Arial", 12), fg="red").pack()
+                return
 
-        tk.Button(self.root, text="Back to Main Menu", command=self.create_main_menu).pack(pady=10)# Button to return to Main Menu
+            # Generate a unique booking ID
+            booking_id = f"BOOK{len(self.sales) + 1:06d}"  # Incremental booking ID
 
-    # Admin Dashboard
+            # Save the purchase for logged-in users
+            if self.logged_in_user:
+                self.customers[self.logged_in_user]["purchases"].append({
+                    "items": tickets_with_ids,  # Include tickets with their unique IDs
+                    "total_cost": total_cost,
+                    "payment_date": fixed_date,
+                    "booking_id": booking_id  # Include the booking ID
+                })
+                save_data(CUSTOMER_FILE, self.customers)
+
+            # Update sales data
+            for ticket in self.cart:
+                ticket_type = ticket["ticket_type"] if isinstance(ticket, dict) else ticket
+                if ticket_type in self.sales:
+                    self.sales[ticket_type] += 1
+            save_data(SALES_FILE, self.sales)
+
+            self.cart.clear()  # Clear the cart after checkout
+
+            # Display payment confirmation with booking and ticket IDs
+            tk.Label(self.root, text=f"Payment Completed Successfully!", font=("Arial", 12), fg="green").pack()
+            tk.Label(self.root, text=f"Booking ID: {booking_id}", font=("Arial", 12),
+                     fg="blue").pack()  # Show booking ID
+            tk.Label(self.root, text=f"Card Number: {card_number}", font=("Arial", 12)).pack()
+            tk.Label(self.root, text=f"Payment Date: {fixed_date}", font=("Arial", 12)).pack()
+
+            # Display individual tickets and their IDs
+            tk.Label(self.root, text="Tickets Details:", font=("Arial", 12)).pack(pady=5)
+            for ticket_info in tickets_with_ids:
+                ticket = ticket_info["ticket"]
+                ticket_details = f"{ticket['ticket_type'] if isinstance(ticket, dict) else ticket} (ID: {ticket_info['ticket_id']})"
+                if isinstance(ticket, dict) and "seat_number" in ticket:
+                    ticket_details += f", Seat {ticket['seat_number']}, Service: {ticket['service']}"
+                tk.Label(self.root, text=f"- {ticket_details}", font=("Arial", 12)).pack()
+
+        # Confirm payment button
+        tk.Button(self.root, text="Confirm Payment", font=("Arial", 12), command=complete_payment).pack(pady=10)
+
+        # Back to Main Menu button
+        tk.Button(self.root, text="Back to Main Menu", font=("Arial", 12), command=self.create_main_menu).pack(pady=10)
+
     def admin_dashboard(self):
-        self.clear_window()# Clear the current window
-        tk.Label(self.root, text="Admin Dashboard", font=("Arial", 16)).pack(pady=10)# Display the section title
+        self.clear_window()
+        tk.Label(self.root, text="Admin Dashboard", font=("Arial", 16)).pack(pady=10)
 
-        tk.Button(self.root, text="View Sales", font=("Arial", 12), command=self.view_sales).pack(pady=5) # Button to view sales data
-        tk.Button(self.root, text="Modify Discounts", font=("Arial", 12), command=self.modify_discounts).pack(pady=5)# Button to modify discounts
-        tk.Button(self.root, text="Back to Main Menu", font=("Arial", 12), command=self.create_main_menu).pack(pady=10) # Button to return to Main Menu
+        # Buttons for Admin Actions
+        tk.Button(self.root, text="View Sales", font=("Arial", 12), command=self.view_sales).pack(pady=5)
+        tk.Button(self.root, text="View Top Tickets", font=("Arial", 12), command=self.view_top_tickets).pack(
+            pady=5)  # New button
+        tk.Button(self.root, text="Modify Discounts", font=("Arial", 12), command=self.modify_discounts).pack(pady=5)
+        tk.Button(self.root, text="View Admin Info", font=("Arial", 12), command=self.view_admin_info).pack(pady=5)
+        tk.Button(self.root, text="Back to Main Menu", font=("Arial", 12), command=self.create_main_menu).pack(pady=10)
+
+    def view_admin_info(self):
+        self.clear_window()
+        tk.Label(self.root, text="Admin Information", font=("Arial", 16)).pack(pady=10)
+
+        # Example hardcoded admin info
+        admin_details = Admin("roudha001", "roudha ", "roudha@gmail.com", "Full Access", "password123")
+
+        tk.Label(self.root, text=f"Admin ID: {admin_details.get_admin_id()}", font=("Arial", 12)).pack()
+        tk.Label(self.root, text=f"Name: {admin_details.get_name()}", font=("Arial", 12)).pack()
+        tk.Label(self.root, text=f"Email: {admin_details.get_email()}", font=("Arial", 12)).pack()
+        tk.Label(self.root, text=f"Access Level: {admin_details.get_access_level()}", font=("Arial", 12)).pack()
+
+        tk.Button(self.root, text="Back to Admin Dashboard", command=self.admin_dashboard).pack(pady=10)
 
     # Function to view sales data
     def view_sales(self):
@@ -281,6 +598,23 @@ class TicketSystemApp:
         for ticket, sold in self.sales.items():# Iterate over the sales data
             tk.Label(self.root, text=f"{ticket}: {sold} tickets sold", font=("Arial", 12)).pack()# Display each ticket's sales
         tk.Button(self.root, text="Back to Admin Dashboard", command=self.admin_dashboard).pack(pady=10)# Button to return to Admin Dashboard
+
+    # Function to view top-selling tickets
+    def view_top_tickets(self):
+        self.clear_window()
+        tk.Label(self.root, text="Top-Selling Tickets", font=("Arial", 16)).pack(pady=10)
+
+        # Sort tickets by the number of sales in descending order
+        sorted_sales = sorted(self.sales.items(), key=lambda x: x[1], reverse=True)
+
+        if not sorted_sales:  # If no sales data is available
+            tk.Label(self.root, text="No sales data available.", font=("Arial", 12), fg="red").pack()
+        else:
+            # Display top tickets
+            for ticket, sold in sorted_sales:
+                tk.Label(self.root, text=f"{ticket}: {sold} tickets sold", font=("Arial", 12)).pack()
+
+        tk.Button(self.root, text="Back to Admin Dashboard", command=self.admin_dashboard).pack(pady=10)
 
     def modify_discounts(self):
         self.clear_window()  # Clear the current window
