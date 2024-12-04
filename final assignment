@@ -395,59 +395,77 @@ class TicketSystemApp:
             # Add tickets without any special condition directly to the cart
             self.cart.append(ticket_type)
             tk.Label(self.root, text=f"Added {ticket_type} to cart!", font=("Arial", 12)).pack()
-
-    # Function to view the items in the cart
+#view cart function
     def view_cart(self):
-        self.clear_window()  # Clear the current window
-        tk.Label(self.root, text="Your Shopping Cart", font=("Arial", 16)).pack(pady=10)  # Display the section title
+        # Clear the current window to display the cart
+        self.clear_window()
 
-        if not self.cart:  # If the cart is empty
-            tk.Label(self.root, text="Your cart is empty.", font=("Arial", 12),
-                     fg="red").pack()  # Display an empty cart message
-        else:  # If the cart has items
-            for i, ticket in enumerate(self.cart):  # Display each item in the cart
-                tk.Label(self.root, text=f"{i + 1}. {ticket}", font=("Arial", 12)).pack()
+        # Display the title for the shopping cart section
+        tk.Label(self.root, text="Your Shopping Cart", font=("Arial", 16)).pack(pady=10)
 
-            tk.Label(self.root, text="Enter item number to remove:",
-                     font=("Arial", 12)).pack()  # Prompt to remove an item
-            item_entry = tk.Entry(self.root)  # Create an entry widget for the item number
+        # Check if the cart is empty
+        if not self.cart:
+            # Display a message if the cart is empty
+            tk.Label(self.root, text="Your cart is empty.", font=("Arial", 12), fg="red").pack()
+        else:
+            # Frame to hold cart items for better structure
+            cart_frame = tk.Frame(self.root)
+            cart_frame.pack(pady=10)
+
+            # Display column headers for the cart
+            tk.Label(cart_frame, text="Item No", font=("Arial", 12), width=10).grid(row=0, column=0)
+            tk.Label(cart_frame, text="Ticket Type", font=("Arial", 12), width=20).grid(row=0, column=1)
+            tk.Label(cart_frame, text="Details", font=("Arial", 12), width=40).grid(row=0, column=2)
+
+            # Loop through the cart and display each item with its details
+            for i, ticket in enumerate(self.cart):
+                # Format item details
+                if isinstance(ticket, dict):  # VIP tickets or other tickets with details
+                    details = f"Seat: {ticket.get('seat_number', 'N/A')}, Service: {ticket.get('service', 'N/A')}"
+                    ticket_type = ticket.get("ticket_type", "Unknown")
+                else:
+                    details = "Standard Ticket"
+                    ticket_type = ticket
+
+                # Add each item as a new row in the table
+                tk.Label(cart_frame, text=str(i + 1), font=("Arial", 12), width=10).grid(row=i + 1, column=0)
+                tk.Label(cart_frame, text=ticket_type, font=("Arial", 12), width=20).grid(row=i + 1, column=1)
+                tk.Label(cart_frame, text=details, font=("Arial", 12), width=40).grid(row=i + 1, column=2)
+
+            # Prompt the user to enter the item number to remove
+            tk.Label(self.root, text="Enter item number to remove:", font=("Arial", 12)).pack(pady=5)
+            # Entry field for the item number
+            item_entry = tk.Entry(self.root)
             item_entry.pack()
 
-            # Label for feedback messages
+            # Label for displaying feedback messages
             message_label = tk.Label(self.root, text="", font=("Arial", 12))
             message_label.pack(pady=5)
 
-            # Function to remove an item from the cart
+            # Define the function to remove an item from the cart
             def remove_item():
                 try:
-                    index = int(item_entry.get()) - 1  # Get the index of the item to remove
-                    if 0 <= index < len(self.cart):  # Check if the index is valid
+                    # Parse the entered item number
+                    index = int(item_entry.get()) - 1
+
+                    # Validate the item number
+                    if 0 <= index < len(self.cart):
                         removed_item = self.cart.pop(index)  # Remove the item from the cart
-                        message_label.config(text=f"The {removed_item} is removed from the cart.",
-                                             fg="green")  # Success message
-                        # Refresh the updated cart without removing the feedback message
-                        self.clear_window()
-                        tk.Label(self.root, text="Your Shopping Cart", font=("Arial", 16)).pack(pady=10)
-                        for i, ticket in enumerate(self.cart):  # Display updated cart items
-                            tk.Label(self.root, text=f"{i + 1}. {ticket}", font=("Arial", 12)).pack()
-                        tk.Label(self.root, text="Enter item number to remove:", font=("Arial", 12)).pack()
-                        item_entry = tk.Entry(self.root)  # Add the input entry again
-                        item_entry.pack()
-                        tk.Button(self.root, text="Remove Item", command=remove_item).pack(pady=5)
-                        message_label.pack(pady=5)
+                        message_label.config(text=f"Removed {removed_item} from the cart.", fg="green")
+                        self.view_cart()  # Refresh the cart view
                     else:
-                        message_label.config(text="Invalid item number. Please try again.", fg="red")  # Error message
-                except ValueError:  # Handle invalid input
-                    message_label.config(text="Please enter a valid number.", fg="red")  # Error message
+                        message_label.config(text="Invalid item number. Please try again.", fg="red")
+                except ValueError:
+                    message_label.config(text="Please enter a valid number.", fg="red")
 
-            tk.Button(self.root, text="Remove Item", command=remove_item).pack(
-                pady=5)  # Button to trigger the remove action
+            # Button to remove the specified item
+            tk.Button(self.root, text="Remove Item", font=("Arial", 12), command=remove_item).pack(pady=10)
 
-        tk.Button(self.root, text="Back to Ticket Purchasing", command=self.ticket_purchasing).pack(
-            pady=10)  # Button to return to Ticket Purchasing
+        # Button to return to the Ticket Purchasing menu
+        tk.Button(self.root, text="Back to Ticket Purchasing", font=("Arial", 12), command=self.ticket_purchasing).pack(
+            pady=10)
+
     # Function to handle the checkout process
-    from datetime import datetime  # Ensure this is imported at the top of the file
-
     def checkout(self):
         """
         Handle the checkout process for ticket purchases.
