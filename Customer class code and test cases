@@ -1,0 +1,194 @@
+class Customer:
+    """
+    Customer class represents a user in the ticket booking system.
+
+    Attributes:
+        customer_id (int): Unique identifier for each customer.
+        name (str): The customer's name.
+        email (str): The customer's email address.
+        phone_number (str): The customer's contact number.
+        purchase_history (list): A list of bookings associated with the customer.
+
+    Relationships:
+        - Connected to ShoppingCart (Aggregation): A customer can have multiple shopping carts (0..*).
+        - Connected to Booking (Aggregation): A customer can have multiple bookings (1..*).
+    """
+
+    def __init__(self, customer_id, name, email, phone_number):
+        """
+        Constructor to initialize Customer attributes.
+        """
+        if not isinstance(customer_id, int) or customer_id <= 0:
+            raise ValueError("Customer ID must be a positive integer.")
+        if not name or not isinstance(name, str):
+            raise ValueError("Name must be a non-empty string.")
+        if not email or "@" not in email:
+            raise ValueError("Invalid email format.")
+        if not phone_number or not phone_number.isdigit():
+            raise ValueError("Phone number must contain only digits.")
+
+        self._customer_id = customer_id
+        self._name = name
+        self._email = email
+        self._phone_number = phone_number
+        self._purchase_history = []
+
+    # Getters
+    def get_customer_id(self):
+        """Get the customer ID."""
+        return self._customer_id
+
+    def get_name(self):
+        """Get the customer's name."""
+        return self._name
+
+    def get_email(self):
+        """Get the customer's email."""
+        return self._email
+
+    def get_phone_number(self):
+        """Get the customer's phone number."""
+        return self._phone_number
+
+    def get_purchase_history(self):
+        """Get the customer's purchase history."""
+        return self._purchase_history
+
+    # Setters
+    def set_name(self, name):
+        """Set the customer's name."""
+        if not name or not isinstance(name, str):
+            raise ValueError("Name must be a non-empty string.")
+        self._name = name
+
+    def set_email(self, email):
+        """Set the customer's email."""
+        if not email or "@" not in email:
+            raise ValueError("Invalid email format.")
+        self._email = email
+
+    def set_phone_number(self, phone_number):
+        """Set the customer's phone number."""
+        if not phone_number or not phone_number.isdigit():
+            raise ValueError("Phone number must contain only digits.")
+        self._phone_number = phone_number
+
+    def set_purchase_history(self, purchase_history):
+        """Set the customer's purchase history."""
+        if not isinstance(purchase_history, list):
+            raise ValueError("Purchase history must be a list.")
+        self._purchase_history = purchase_history
+
+    # Additional Functionalities
+    def create_account(self):
+        """
+        Simulates account creation for the customer.
+        """
+        return f"Account created successfully for {self._name}."
+
+    def update_account(self, name=None, email=None, phone_number=None):
+        """
+        Updates the customer's account information.
+        Allows partial updates by checking each parameter.
+        """
+        if name:
+            self.set_name(name)
+        if email:
+            self.set_email(email)
+        if phone_number:
+            self.set_phone_number(phone_number)
+        return f"Account updated successfully for {self._name}."
+
+    def view_purchase_history(self):
+        """
+        Displays the customer's purchase history.
+        """
+        if not self._purchase_history:
+            return f"No purchases found for {self._name}."
+        return f"Purchase history for {self._name}: {self._purchase_history}"
+
+    def add_booking(self, booking):
+        """
+        Adds a booking to the customer's purchase history.
+        Assumes 'booking' is an instance of the Booking class.
+        """
+        # Relationship with Booking
+        if not booking:
+            raise ValueError("Booking cannot be empty.")
+        self._purchase_history.append(booking)
+        return f"Booking added for {self._name}."
+
+    def remove_booking(self, booking):
+        """
+        Removes a booking from the customer's purchase history.
+        """
+        if booking not in self._purchase_history:
+            raise ValueError("Booking not found in purchase history.")
+        self._purchase_history.remove(booking)
+        return f"Booking removed for {self._name}."
+
+# Example Usage
+if __name__ == "__main__":
+    # Create a Customer instance
+    try:
+        customer = Customer(1, "Rawdha", "rawdha@example.com", "0554788002")
+        print(customer.create_account())
+
+        # Update account
+        print(customer.update_account(name="Rawdha Almarzooqi", email="rawdhamarzooqi@gmail.com"))
+
+        # Add a booking
+        booking_example = {"ticket_id": 123, "date": "2024-12-05", "price": 200.0}  # Mock Booking
+        print(customer.add_booking(booking_example))
+
+        # View purchase history
+        print(customer.view_purchase_history())
+
+        # Remove a booking
+        print(customer.remove_booking(booking_example))
+
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
+
+
+test cases:
+
+
+# Test Case 1: Valid Customer Creation and Booking Management
+try:
+    # Create a valid customer
+    customer = Customer(101, "Aysha", "aysha@example.com", "0567894321")
+    print(customer.create_account())  # Output: Account created successfully for Aysha.
+
+    # Update the customer's details
+    print(customer.update_account(name="Aysha Khalid", email="aykhalid@example.com"))
+
+    # Add a booking to the customer's purchase history
+    booking_1 = {"ticket_id": 201, "date": "2024-12-06", "price": 150.0}
+    print(customer.add_booking(booking_1))  # Output: Booking added for Aysha Khalid.
+
+    # View the purchase history
+    print(customer.view_purchase_history())  # Output: Purchase history for Aysha Khalid: [{'ticket_id': 201, 'date': '2024-12-06', 'price': 150.0}]
+
+    # Remove the booking
+    print(customer.remove_booking(booking_1))  # Output: Booking removed for Aysha Khalid.
+
+    # View the purchase history after removal
+    print(customer.view_purchase_history())  # Output: No purchases found for Aysha Khalid.
+
+except ValueError as e:
+    print(f"Error: {e}")
+
+
+
+
+# Test Case 2: Invalid Customer Creation and Handling Exceptions
+try:
+    # Attempt to create a customer with invalid inputs
+    invalid_customer = Customer(-1, "", "invalid_email", "abc123")
+    print(invalid_customer.create_account())  # This line should not execute due to exception.
+
+except ValueError as e:
+    print(f"Error: {e}")  # Expected output: Error: Customer ID must be a positive integer.
